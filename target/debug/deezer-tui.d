@@ -1,1 +1,0 @@
-/home/ubuntu/deezer-tui/target/debug/deezer-tui: /home/ubuntu/deezer-tui/src/api.rs /home/ubuntu/deezer-tui/src/app.rs /home/ubuntu/deezer-tui/src/config.rs /home/ubuntu/deezer-tui/src/crypto.rs /home/ubuntu/deezer-tui/src/discord_rpc.rs /home/ubuntu/deezer-tui/src/main.rs /home/ubuntu/deezer-tui/src/mpris.rs /home/ubuntu/deezer-tui/src/player.rs /home/ubuntu/deezer-tui/src/ui.rs
