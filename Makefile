@@ -1,4 +1,4 @@
-.PHONY: check test lint ci
+.PHONY: check test lint build ci
 
 CLIPPY_FLAGS = --all-targets --all-features -- -D warnings \
 	-A dead_code \
@@ -17,5 +17,8 @@ test:
 
 lint:
 	cargo clippy --locked $(CLIPPY_FLAGS)
+
+build:
+	cargo build --locked
 
 ci: check test lint
