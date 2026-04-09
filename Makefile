@@ -10,12 +10,12 @@ CLIPPY_FLAGS = --all-targets --all-features -- -D warnings \
 	-A clippy::useless_vec
 
 check:
-	cargo check
+	cargo check --locked
 
 test:
-	cargo test
+	cargo test --locked
 
 lint:
-	cargo clippy $(CLIPPY_FLAGS)
+	cargo clippy --locked $(CLIPPY_FLAGS)
 
 ci: check test lint

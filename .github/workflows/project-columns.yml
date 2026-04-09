@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   move-issue:
-    if: github.event_name == 'create' || github.event_name == 'pull_request'
+    if: github.event_name == 'create' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
 
     steps:
@@ -79,7 +79,7 @@ jobs:
 
       - name: Move issue card
         if: steps.context.outputs.should_move == 'true'
-        uses: kin/gh-action-move-issue-to-column@1.0
+        uses: kin/gh-action-move-issues-to-column@v1.0
         with:
           access-token: ${{ secrets.GA_ACCESS_TOKEN || github.token }}
           project-name: Sunburn
