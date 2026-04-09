@@ -1,0 +1,87 @@
+name: Project Columns
+
+on:
+  create:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - ready_for_review
+      - closed
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+  repository-projects: write
+
+jobs:
+  move-issue:
+    if: github.event_name == 'create' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Resolve target column and related issues
+        id: context
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const eventName = context.eventName;
+            let targetColumn = "";
+            let issueNumbers = [];
+
+            if (eventName === "create") {
+              if (context.payload.ref_type !== "branch") {
+                core.notice("Skipping create event because it is not a branch.");
+                core.setOutput("should_move", "false");
+                return;
+              }
+
+              targetColumn = "In Progress";
+
+              // Branch creation payloads do not include linked issues, so the branch
+              // name must contain the issue number, e.g. `123-short-title` or
+              // `issue-123-short-title`.
+              const ref = context.payload.ref || "";
+              const match = ref.match(/(?:^|[/-])(?:issue-|issues-)?(\d+)(?:[/-]|$)/i);
+              if (match) {
+                issueNumbers = [Number(match[1])];
+              } else {
+                core.notice(`No issue number found in branch name "${ref}".`);
+              }
+            }
+
+            if (eventName === "pull_request") {
+              const action = context.payload.action;
+              const pr = context.payload.pull_request;
+
+              if (["opened", "reopened", "ready_for_review"].includes(action)) {
+                targetColumn = "In Review";
+              } else if (action === "closed" && pr.merged) {
+                targetColumn = "Done";
+              } else if (action === "closed" && !pr.merged) {
+                targetColumn = "Backlog";
+              }
+
+              const text = [pr.title || "", pr.body || "", pr.head?.ref || ""].join("\n");
+              const issueMatches = text.match(/#(\d+)/g) || [];
+              issueNumbers = [...new Set(issueMatches.map((value) => Number(value.slice(1))))];
+
+              if (issueNumbers.length === 0) {
+                core.notice("No issue references found in PR title, body, or branch name.");
+              }
+            }
+
+            const issues = issueNumbers.map((number) => ({ issue: { number } }));
+            core.setOutput("issues", JSON.stringify(issues));
+            core.setOutput("target_column", targetColumn);
+            core.setOutput("should_move", String(Boolean(targetColumn) && issues.length > 0));
+
+      - name: Move issue card
+        if: steps.context.outputs.should_move == 'true'
+        uses: kin/gh-action-move-issue-to-column@1.0
+        with:
+          access-token: ${{ secrets.GA_ACCESS_TOKEN || github.token }}
+          project-name: Sunburn
+          target-column: ${{ steps.context.outputs.target_column }}
+          issues: ${{ steps.context.outputs.issues }}

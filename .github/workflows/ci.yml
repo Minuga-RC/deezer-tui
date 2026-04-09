@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - "ob-*"
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-and-lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Cache cargo artifacts
+        uses: Swatinem/rust-cache@v2
+
+      - name: Check
+        run: cargo check
+
+      - name: Test
+        run: cargo test
+
+      - name: Lint
+        run: >
+          cargo clippy --all-targets --all-features --
+          -D warnings
+          -A dead_code
+          -A clippy::manual_is_multiple_of
+          -A clippy::collapsible_if
+          -A clippy::useless_conversion
+          -A clippy::useless_format
+          -A clippy::collapsible_match
+          -A clippy::useless_vec
